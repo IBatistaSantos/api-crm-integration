@@ -85,6 +85,7 @@ export class UsersService {
 
   async activeUser(id: string) {
     const user = await this.userModel.findById({ _id: id });
+
     user.is_active = true;
 
     await user.save();
