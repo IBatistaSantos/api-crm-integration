@@ -42,12 +42,23 @@ export class CompanyController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companyService.update(+id, updateCompanyDto);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  update(
+    @GetUser() user: User,
+    @Param('id') id: string,
+    @Body() updateCompanyDto: UpdateCompanyDto,
+  ) {
+    const payload: UpdateCompanyDto = {
+      id,
+      userId: user._id,
+      name: updateCompanyDto.name,
+    };
+    return this.companyService.update(payload);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.companyService.remove(+id);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  remove(@GetUser() user: User, @Param('id') id: string) {
+    return this.companyService.remove(id, user._id);
   }
 }

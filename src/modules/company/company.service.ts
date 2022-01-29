@@ -37,12 +37,25 @@ export class CompanyService {
     return company;
   }
 
-  update(id: number, updateCompanyDto: UpdateCompanyDto) {
-    return `This action updates a #${id} company`;
+  async update({ id, userId, name }: UpdateCompanyDto) {
+    const company = await this.findOne(id, userId);
+
+    const companyExists = await this.findByName(name);
+
+    if (companyExists) {
+      throw new HttpException('Company already exists', HttpStatus.BAD_REQUEST);
+    }
+
+    company.name = name;
+    await company.save();
+
+    return company;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} company`;
+  async remove(id: string, userId: string) {
+    const company = await this.findOne(id, userId);
+
+    await company.remove();
   }
 
   async findByName(name: string) {
