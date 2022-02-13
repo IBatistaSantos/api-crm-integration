@@ -15,6 +15,7 @@ import { RolesGuard } from '../auth/guard/roles.guard';
 import { User } from '../users/schemas/user.schema';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
+import { InviteCompanyDto } from './dto/invite-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 
 @Controller('company')
@@ -60,5 +61,20 @@ export class CompanyController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   remove(@GetUser() user: User, @Param('id') id: string) {
     return this.companyService.remove(id, user._id);
+  }
+
+  @Post(':id/invite')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  invite(
+    @GetUser() user: User,
+    @Param('id') id: string,
+    @Body() inviteDto: InviteCompanyDto,
+  ) {
+    const payload = {
+      emails: inviteDto.emails,
+      companyId: id,
+      userId: user._id,
+    };
+    return this.companyService.invite(payload);
   }
 }

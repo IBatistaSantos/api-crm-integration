@@ -1,5 +1,7 @@
+import { InjectQueue } from '@nestjs/bull';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Queue } from 'bull';
 import { Model } from 'mongoose';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -10,7 +12,11 @@ export class CompanyService {
   constructor(
     @InjectModel(Company.name)
     private readonly companyModel: Model<CompanyDocument>,
+
+    @InjectQueue('invite-email')
+    private readonly inviteEmailQueue: Queue,
   ) {}
+
   async create(createCompanyDto: CreateCompanyDto) {
     const companyExists = await this.findByName(createCompanyDto.name);
 
@@ -63,4 +69,37 @@ export class CompanyService {
       name,
     });
   }
+
+  async findUserInCompany(userId: string, companyId: string) {
+    return this.companyModel.findOne({
+      _id: companyId,
+      creator_id: userId,
+    });
+  }
+
+  async invite(payload: CreateInviteCompany) {
+    const { emails, companyId, userId } = payload;
+    const userInCompany = await this.findUserInCompany(userId, companyId);
+
+    if (!userInCompany) {
+      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    Promise.all(
+      emails.map(async (email) => {
+        const payloadInFile = {
+          email,
+          companyId,
+        };
+
+        await this.inviteEmailQueue.add(payloadInFile);
+      }),
+    );
+  }
+}
+
+interface CreateInviteCompany {
+  companyId: string;
+  emails: string[];
+  userId: string;
 }
