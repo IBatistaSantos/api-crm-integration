@@ -5,6 +5,8 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CompanyModule } from './modules/company/company.module';
 import { BullModule } from '@nestjs/bull';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { mailerConfig } from './shared/config/mail';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { BullModule } from '@nestjs/bull';
       useNewUrlParser: true,
       useUnifiedTopology: true,
     }),
+    MailerModule.forRoot(mailerConfig),
     UsersModule,
     AuthModule,
     CompanyModule,

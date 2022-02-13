@@ -6,12 +6,22 @@ import { Model } from 'mongoose';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { Company, CompanyDocument } from './schemas/company.schema';
+import { InviteCompany, InviteCompanyDocument } from './schemas/invite.schema';
+
+interface CreateInviteCompany {
+  companyId: string;
+  emails: string[];
+  userId: string;
+}
 
 @Injectable()
 export class CompanyService {
   constructor(
     @InjectModel(Company.name)
     private readonly companyModel: Model<CompanyDocument>,
+
+    @InjectModel(InviteCompany.name)
+    private readonly inviteCompanyModel: Model<InviteCompanyDocument>,
 
     @InjectQueue('invite-email')
     private readonly inviteEmailQueue: Queue,
@@ -85,7 +95,7 @@ export class CompanyService {
       throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
     }
 
-    Promise.all(
+    await Promise.all(
       emails.map(async (email) => {
         const payloadInFile = {
           email,
@@ -96,10 +106,16 @@ export class CompanyService {
       }),
     );
   }
-}
 
-interface CreateInviteCompany {
-  companyId: string;
-  emails: string[];
-  userId: string;
+  async acceptInvite(inviteId: string) {
+    const invite = await this.inviteCompanyModel.findById(inviteId);
+
+    if (!invite) {
+      throw new HttpException('Invite not found', HttpStatus.NOT_FOUND);
+    }
+
+    invite.status = 'accepted';
+
+    await invite.save();
+  }
 }

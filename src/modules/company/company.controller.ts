@@ -77,4 +77,10 @@ export class CompanyController {
     };
     return this.companyService.invite(payload);
   }
+
+  @Patch('invite/:inviteId/accept')
+  @UseGuards(JwtAuthGuard)
+  acceptInvite(@Param('inviteId') inviteId: string) {
+    return this.companyService.acceptInvite(inviteId);
+  }
 }

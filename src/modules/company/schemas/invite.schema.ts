@@ -9,7 +9,6 @@ class InviteCompany {
 
   @Prop({
     required: true,
-    unique: true,
   })
   email: string;
 
